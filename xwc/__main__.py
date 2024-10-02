@@ -13,6 +13,7 @@ Written by: xexerogrammer"""
 
     parser.add_argument("-l", "--lines", action="store_true", help="print the newline counts")
     parser.add_argument("-w", "--words", action="store_true", help="print the word counts")
+    parser.add_argument("-m", "--chars", action="store_true", help="print the character counts")
     parser.add_argument("-v", "--version", action="store_true", help="output version information and exit")
     parser.add_argument("FILE", type=str, nargs="*")
 
@@ -33,17 +34,21 @@ def get_state(args):
     # return an integer corrispomding to the state of the program
     # 1 get lines
     # 2 get words
+    # 4 get characters
     state = 0;
     if args.lines:
         state ^= 1
     if args.words:
         state ^= 2
+    if args.chars:
+        state ^= 4
     return state
 
 def get_file_details(fh):
     file_details = {
                     "lines": 0,
                     "words": 0,
+                    "chars": 0,
                 }
     file = None
     in_word = False
@@ -57,6 +62,7 @@ def get_file_details(fh):
     for line in file:
         file_details["lines"] += 1;
         for character in line:
+            file_details["chars"] += 1
             if not character.isspace():
                 in_word = True
             elif in_word == True:
@@ -70,6 +76,8 @@ def print_report(file, file_details, state):
         print(f'{file_details["lines"]:4}', end=" ")
     if state & 2:
         print(f'{file_details["words"]:4}', end=" ")
+    if state & 4:
+        print(f'{file_details["chars"]:4}', end=" ")
     print(file)
 
 main()
