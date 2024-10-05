@@ -15,6 +15,7 @@ Written by: xexerogrammer"""
     parser.add_argument("-l", "--lines", action="store_true", help="print the newline counts")
     parser.add_argument("-c", "--bytes", action="store_true", help="print the byte counts")
     parser.add_argument("-w", "--words", action="store_true", help="print the word counts")
+    parser.add_argument("-L", "--max-line-length", action="store_true", help="print the maximum display width")
     parser.add_argument("-m", "--chars", action="store_true", help="print the character counts")
     parser.add_argument("-v", "--version", action="store_true", help="output version information and exit")
     parser.add_argument("FILE", type=str, nargs="*")
@@ -38,6 +39,7 @@ def get_state(args):
     # 2 get words
     # 4 get characters
     # 8 get bytes
+    # 16 get longest line
     state = 0;
     if args.lines:
         state ^= 1
@@ -47,6 +49,8 @@ def get_state(args):
         state ^= 4
     if args.bytes:
         state ^= 8
+    if args.max_line_length:
+        state ^= 16
     return state
 
 def get_file_details(fh):
@@ -55,6 +59,7 @@ def get_file_details(fh):
                     "words": 0,
                     "chars": 0,
                     "bytes": 0,
+                    "longest": 0,
                 }
     file = None
     in_word = False
@@ -66,10 +71,13 @@ def get_file_details(fh):
         return file_details
 
     for line in file:
+        line_chars = 0
         if line[-1] == "\n":
             file_details["lines"] += 1;
         for character in line:
             file_details["chars"] += 1
+            if character != "\n":
+                line_chars += 1
             if not character.isspace():
                 in_word = True
             elif in_word == True:
@@ -78,6 +86,8 @@ def get_file_details(fh):
         if in_word:
             in_word = False
             file_details["words"] += 1
+        if line_chars > file_details["longest"]:
+            file_details["longest"] = line_chars
 
     file_details["bytes"] = getsize(fh)
     return file_details
@@ -91,6 +101,8 @@ def print_report(file, file_details, state):
         print(f'{file_details["chars"]:4}', end=" ")
     if state & 8:
         print(f'{file_details["bytes"]:4}', end=" ")
+    if state & 16:
+        print(f'{file_details["longest"]:4}', end=" ")
     print(file)
 
 main()
