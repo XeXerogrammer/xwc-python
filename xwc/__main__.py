@@ -51,7 +51,7 @@ def get_state(args):
         state ^= 8
     if args.max_line_length:
         state ^= 16
-    return state
+    return state if state else 7
 
 def get_file_details(fh):
     file_details = {
