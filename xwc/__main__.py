@@ -13,6 +13,7 @@ Written by: xexerogrammer"""
     parser = argparse.ArgumentParser(description="Print newline, word, and byte counts for each FILE, and a total line if\nmore than one FILE is specified.  A word is a non-zero-length sequence of\nprintable characters delimited by white space.")
 
     parser.add_argument("-l", "--lines", action="store_true", help="print the newline counts")
+    parser.add_argument("-t", "--total", action="store_true", help="print a line with total counts")
     parser.add_argument("-c", "--bytes", action="store_true", help="print the byte counts")
     parser.add_argument("-w", "--words", action="store_true", help="print the word counts")
     parser.add_argument("-L", "--max-line-length", action="store_true", help="print the maximum display width")
@@ -26,11 +27,22 @@ Written by: xexerogrammer"""
         print(version_text)
         return 0
     state = get_state(args)
+    total_details = {
+                    "lines": 0,
+                    "words": 0,
+                    "chars": 0,
+                    "bytes": 0,
+                    "longest": 0,
+                }
     for file in args.FILE:
         file_details = get_file_details(file)
         if file_details["lines"] < 0:
             continue
+        for k in total_details:
+            total_details[k] += file_details[k]
         print_report(file, file_details, state)
+    if state & 32:
+        print_report("total", total_details, state)
     return 0
 
 def get_state(args):
@@ -40,6 +52,8 @@ def get_state(args):
     # 4 get characters
     # 8 get bytes
     # 16 get longest line
+    # 32 show the total
+    total = 1 if args.total else 0
     state = 0;
     if args.lines:
         state ^= 1
@@ -51,7 +65,7 @@ def get_state(args):
         state ^= 8
     if args.max_line_length:
         state ^= 16
-    return state if state else 7
+    return (state if state else 7) ^ (32 * total)
 
 def get_file_details(fh):
     file_details = {
