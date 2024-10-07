@@ -1,5 +1,6 @@
 import argparse
 from os.path import getsize
+from sys import stdin
 
 def main():
 
@@ -27,22 +28,26 @@ Written by: xexerogrammer"""
         print(version_text)
         return 0
     state = get_state(args)
-    total_details = {
+    if args.FILE:
+        total_details = {
                     "lines": 0,
                     "words": 0,
                     "chars": 0,
                     "bytes": 0,
                     "longest": 0,
                 }
-    for file in args.FILE:
-        file_details = get_file_details(file)
-        if file_details["lines"] < 0:
-            continue
-        for k in total_details:
-            total_details[k] += file_details[k]
-        print_report(file, file_details, state)
-    if state & 32:
-        print_report("total", total_details, state)
+        for file in args.FILE:
+            file_details = get_file_details(file)
+            if file_details["lines"] < 0:
+                continue
+            for k in total_details:
+                total_details[k] += file_details[k]
+            print_report(file, file_details, state)
+        if state & 32:
+            print_report("total", total_details, state)
+    else:
+        stdin_details = get_stdin_details()
+        print_report("", stdin_details, state)
     return 0
 
 def get_state(args):
@@ -105,6 +110,39 @@ def get_file_details(fh):
 
     file_details["bytes"] = getsize(fh)
     return file_details
+
+def get_stdin_details():
+    data = stdin.read()
+    stdin_details = {
+                    "lines": 0,
+                    "words": 0,
+                    "chars": 0,
+                    "bytes": 0,
+                    "longest": 0,
+                }
+
+    in_word = False
+    lines = [x for x in data.split("\n")]
+    for line in lines:
+        line_chars = 0  
+        for character in line:
+            stdin_details["chars"] += 1
+            if character != "\n":
+                line_chars += 1
+            if not character.isspace():
+                in_word = True
+            elif in_word == True:
+                in_word = False
+                stdin_details["words"] += 1
+        if in_word:
+            in_word = False
+            stdin_details["words"] += 1
+        if line_chars > stdin_details["longest"]:
+            stdin_details["longest"] = line_chars
+    stdin_details["lines"] = len(lines) - 1
+    stdin_details["chars"] += len(lines) - 1
+    stdin_details["bytes"] = len(data.encode("utf-8"))
+    return stdin_details
 
 def print_report(file, file_details, state):
     if state & 1:
