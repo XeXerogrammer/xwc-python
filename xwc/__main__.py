@@ -1,5 +1,5 @@
 import argparse
-from os.path import getsize
+from os.path import getsize, exists, isdir
 from sys import stdin
 
 def main():
@@ -82,9 +82,14 @@ def get_file_details(fh):
                 }
     file = None
     in_word = False
-    try:
-        file = open(fh, "r")
-    except Exception:
+    if exists(fh):
+        if isdir(fh):
+            print(fh, ": is a directory")
+            file_details["lines"] = -1
+            return file_details
+        else:
+            file = open(fh, "r")
+    else:
         print(fh, ": no such file or directory")
         file_details["lines"] = -1
         return file_details
